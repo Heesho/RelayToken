@@ -70,6 +70,8 @@ contract RelayFactory is Ownable {
         relayRewarder = IRelayRewarderFactory(relayRewarderFactory).createRelayRewarder(msg.sender, relayToken);
         relayDistro = IRelayDistroFactory(relayDistroFactory).createRelayDistro(msg.sender, relayRewarder);
         // relayFeeFlow = IRelayFeeFlowFactory(relayFeeFlowFactory)
+        // set fee flow on relayToken
+        // set distro on relayToken
         IRelayRewarder(relayRewarder).addReward(base);
         if (rewardToken != base) IRelayRewarder(relayRewarder).addReward(rewardToken);
         emit RelayFactory__RelayCreated(name, symbol, relayToken, relayRewarder, relayDistro, relayFeeFlow);
