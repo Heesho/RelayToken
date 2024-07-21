@@ -188,7 +188,7 @@ contract RelayToken is ERC20, ERC20Permit, ERC20Votes, Ownable, ReentrancyGuard 
         emit RelayToken__ClaimBribes(bribes);
     }
     
-    function sweepRewardTokens(address[] calldata tokens) 
+    function sweepVotingRewards(address[] calldata tokens) 
         external
     {
         for (uint256 i = 0; i < tokens.length; i++) {

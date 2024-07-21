@@ -13,7 +13,14 @@ const RPC_URL = process.env.RPC_URL || "";
 
 module.exports = {
   solidity: {
-    version: "0.8.19",
+    compilers: [
+      {
+        version: "0.8.19",
+      },
+      {
+        version: "0.8.24",
+      },
+    ],
     settings: {
       optimizer: {
         enabled: true,
