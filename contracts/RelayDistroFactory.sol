@@ -29,7 +29,7 @@ contract RelayDistro is Ownable, ReentrancyGuard {
     ) {
         relayFactory = _relayFactory;
         relayRewarder = _relayRewarder;
-    }
+    } 
 
     function distributeRewards(address[] calldata rewardTokens) external nonReentrant {
         for (uint256 i = 0; i < rewardTokens.length; i++) {

@@ -20,8 +20,8 @@ interface IRelayFeeFlowFactory {
 }
 
 interface IRelayToken {
-    function setRelayDistro(address relayDistro) external;
-    function setRelayFeeFlow(address relayFeeFlow) external;
+    function setDistro(address relayDistro) external;
+    function setFeeFlow(address relayFeeFlow) external;
 }
 
 interface IRelayRewarder {
@@ -80,8 +80,8 @@ contract RelayFactory is Ownable {
         relayRewarder = IRelayRewarderFactory(relayRewarderFactory).createRelayRewarder(msg.sender, relayToken);
         relayDistro = IRelayDistroFactory(relayDistroFactory).createRelayDistro(msg.sender, relayRewarder);
         relayFeeFlow = IRelayFeeFlowFactory(relayFeeFlowFactory).createRelayFeeFlow(relayDistro, rewardToken, initPrice, minInitPrice);
-        IRelayToken(relayToken).setRelayDistro(relayDistro);
-        IRelayToken(relayToken).setRelayFeeFlow(relayFeeFlow);
+        IRelayToken(relayToken).setDistro(relayDistro);
+        IRelayToken(relayToken).setFeeFlow(relayFeeFlow);
         IRelayRewarder(relayRewarder).addReward(base);
         if (rewardToken != base) IRelayRewarder(relayRewarder).addReward(rewardToken);
         emit RelayFactory__RelayCreated(name, symbol, relayToken, relayRewarder, relayDistro, relayFeeFlow);
