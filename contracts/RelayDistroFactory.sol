@@ -34,7 +34,7 @@ contract RelayDistro is Ownable, ReentrancyGuard {
     function distributeRewards(address[] calldata rewardTokens) external nonReentrant {
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             uint256 balance = IERC20(rewardTokens[i]).balanceOf(address(this));
-            if (balance > duration) {
+            if (balance > DURATION) {
                 IERC20(rewardTokens[i]).safeApprove(relayRewarder, 0);
                 IERC20(rewardTokens[i]).safeApprove(relayRewarder, balance);
                 IRelayRewarder(relayRewarder).notifyRewardAmount(rewardTokens[i], balance);
@@ -53,7 +53,7 @@ contract RelayDistroFactory {
     error RelayDistroFactory__InvalidZeroAddress();
 
     event RelayDistroFactory__RelayFactorySet(address indexed account);
-    event RelayDistroFactory__RelayTreasuryCreated(address indexed relayToken);
+    event RelayDistroFactory__RelayDistroCreated(address indexed relayToken);
 
     modifier onlyRelayFactory() {
         if (msg.sender != relayFactory) revert RelayDistroFactory__Unathorized();
@@ -70,11 +70,11 @@ contract RelayDistroFactory {
         emit RelayDistroFactory__RelayFactorySet(_relayFactory);
     }
 
-    function createRelayTreasury(address owner, address relayRewarder) external onlyRelayFactory returns (address) {
-        RelayTreasury relayDistro = new RelayTreasury(relayFactory, relayRewarder);
-        relayTreasury.transferOwnership(owner);
+    function createRelayDistro(address owner, address relayRewarder) external onlyRelayFactory returns (address) {
+        RelayDistro relayDistro = new RelayDistro(relayFactory, relayRewarder);
+        relayDistro.transferOwnership(owner);
         lastRelayDistro = address(relayDistro);
-        emit RelayDistroFactory__RelayTreasuryCreated(lastRelayDistro);
+        emit RelayDistroFactory__RelayDistroCreated(lastRelayDistro);
         return lastRelayDistro;
     }
 

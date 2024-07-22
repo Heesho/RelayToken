@@ -738,7 +738,7 @@ contract MinimalEVCClient {
 /// @title FeeFlowController
 /// @author Euler Labs (https://eulerlabs.com)
 /// @notice Continous back to back dutch auctions selling any asset received by this contract
-contract FeeFlowController is MinimalEVCClient {
+contract RelayFeeFlow is MinimalEVCClient {
     using SafeTransferLib for ERC20;
 
     uint256 constant public MIN_EPOCH_PERIOD = 1 hours;
@@ -908,4 +908,42 @@ contract FeeFlowController is MinimalEVCClient {
     function getSlot0() external view nonReentrantView() returns (Slot0 memory) {
         return slot0;
     }
+}
+
+contract RelayFeeFlowFactory {
+
+    uint256 constant public EPOCH_PERIOD = 7 days;
+    uint256 constant public PRICE_MULTIPLIER = 2 * 1e18;
+
+    address public relayFactory;
+    address public lastRelayFeeFlow;
+
+    error RelayFeeFlowFactory__Unathorized();
+    error RelayFeeFlowFactory__InvalidZeroAddress();
+
+    event RelayFeeFlowFactory__RelayFactorySet(address indexed account);
+    event RelayFeeFlowFactory__RelayFeeFlowCreated(address indexed relayToken);
+
+    modifier onlyRelayFactory() {
+        if (msg.sender != relayFactory) revert RelayFeeFlowFactory__Unathorized();
+        _;
+    }
+
+    constructor(address _relayFactory) {
+        relayFactory = _relayFactory;
+    }
+
+    function setRelayFactory(address _relayFactory) external onlyRelayFactory {
+        if (_relayFactory == address(0)) revert RelayFeeFlowFactory__InvalidZeroAddress();
+        relayFactory = _relayFactory;
+        emit RelayFeeFlowFactory__RelayFactorySet(_relayFactory);
+    }
+
+    function createRelayFeeFlow(address relayDistro, address rewardToken, uint256 initPrice, uint256 minInitPrice) external onlyRelayFactory returns (address) {
+        RelayFeeFlow relayFeeFlow = new RelayFeeFlow(address(0), initPrice, rewardToken, relayDistro, EPOCH_PERIOD, PRICE_MULTIPLIER, minInitPrice);
+        lastRelayFeeFlow = address(relayFeeFlow);
+        emit RelayFeeFlowFactory__RelayFeeFlowCreated(lastRelayFeeFlow);
+        return lastRelayFeeFlow;
+    }
+
 }

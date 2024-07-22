@@ -15,6 +15,15 @@ interface IRelayDistroFactory {
     function createRelayDistro(address owner, address relayRewarder) external returns (address);
 }
 
+interface IRelayFeeFlowFactory {
+    function createRelayFeeFlow(address relayDistro, address rewardToken, uint256 initPrice, uint256 minInitPrice) external returns (address);
+}
+
+interface IRelayToken {
+    function setRelayDistro(address relayDistro) external;
+    function setRelayFeeFlow(address relayFeeFlow) external;
+}
+
 interface IRelayRewarder {
     function addReward(address rewardToken) external;
 }
@@ -40,10 +49,11 @@ contract RelayFactory is Ownable {
     error RelayFactory__InvalidZeroAddress();
     error RelayFactory__Unauthorized();
 
-    event RelayFactory__RelayCreated(string name, string symbol, address indexed relayToken, address indexed relayTokenRewarder);
-    event RelayFactory__RelayTokenFactorySet(address indexed relayTokenFactory);
-    event RelayFactory__RelayRewarderFactorySet(address indexed relayRewarderFactory);
-    event RelayFactory__RelayDistroFactorySet(address indexed relayDistroFactory);
+    event RelayFactory__RelayCreated(string name, string symbol, address relayToken, address relayRewarder, address relayDistro, address relayFeeFlow);
+    event RelayFactory__RelayTokenFactorySet(address relayTokenFactory);
+    event RelayFactory__RelayRewarderFactorySet(address relayRewarderFactory);
+    event RelayFactory__RelayDistroFactorySet(address relayDistroFactory);
+    event RelayFactory__RelayFeeFlowFactorySet(address relayFeeFlowFactory);
 
     constructor(
         address _base, 
@@ -65,13 +75,13 @@ contract RelayFactory is Ownable {
         developer = msg.sender;
     }
 
-    function createRelay(string calldata name, string calldata symbol, address rewardToken) external returns (address relayToken, address relayRewarder, address relayDistro) {
+    function createRelay(string calldata name, string calldata symbol, address rewardToken, uint256 initPrice, uint256 minInitPrice) external returns (address relayToken, address relayRewarder, address relayDistro, address relayFeeFlow) {
         relayToken = IRelayTokenFactory(relayTokenFactory).createRelayToken(msg.sender, name, symbol);
         relayRewarder = IRelayRewarderFactory(relayRewarderFactory).createRelayRewarder(msg.sender, relayToken);
         relayDistro = IRelayDistroFactory(relayDistroFactory).createRelayDistro(msg.sender, relayRewarder);
-        // relayFeeFlow = IRelayFeeFlowFactory(relayFeeFlowFactory)
-        // set fee flow on relayToken
-        // set distro on relayToken
+        relayFeeFlow = IRelayFeeFlowFactory(relayFeeFlowFactory).createRelayFeeFlow(relayDistro, rewardToken, initPrice, minInitPrice);
+        IRelayToken(relayToken).setRelayDistro(relayDistro);
+        IRelayToken(relayToken).setRelayFeeFlow(relayFeeFlow);
         IRelayRewarder(relayRewarder).addReward(base);
         if (rewardToken != base) IRelayRewarder(relayRewarder).addReward(rewardToken);
         emit RelayFactory__RelayCreated(name, symbol, relayToken, relayRewarder, relayDistro, relayFeeFlow);
@@ -89,10 +99,16 @@ contract RelayFactory is Ownable {
         emit RelayFactory__RelayRewarderFactorySet(_relayRewarderFactory);
     }
 
-    function setRelayTreasuryFactory(address _relayTreasuryFactory) external onlyOwner() {
-        if (_relayTreasuryFactory == address(0)) revert RelayFactory__InvalidZeroAddress();
-        relayTreasuryFactory = _relayTreasuryFactory;
-        emit RelayFactory__RelayTreasuryFactorySet(_relayTreasuryFactory);
+    function setRelayDistroFactory(address _relayDistroFactory) external onlyOwner() {
+        if (_relayDistroFactory == address(0)) revert RelayFactory__InvalidZeroAddress();
+        relayDistroFactory = _relayDistroFactory;
+        emit RelayFactory__RelayDistroFactorySet(_relayDistroFactory);
+    }
+
+    function setRelayFeeFlowFactory(address _relayFeeFlowFactory) external onlyOwner() {
+        if (_relayFeeFlowFactory == address(0)) revert RelayFactory__InvalidZeroAddress();
+        relayFeeFlowFactory = _relayFeeFlowFactory;
+        emit RelayFactory__RelayFeeFlowFactorySet(_relayFeeFlowFactory);
     }
 
     function setVoter(address _voter) external onlyOwner() {

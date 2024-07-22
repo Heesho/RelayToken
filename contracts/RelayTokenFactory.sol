@@ -199,7 +199,7 @@ contract RelayToken is ERC20, ERC20Permit, ERC20Votes, Ownable, ReentrancyGuard 
         }
     }
 
-    function sweepBgt() {
+    function sweepBgt() external {
         uint256 balance = IBGT(BGT).unboostedBalanceOf(address(this));
         IBGT(BGT).redeem(address(this), balance);
         IWBERA(WBERA).deposit{value: balance}();
