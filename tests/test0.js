@@ -6,8 +6,8 @@ const { ethers, network } = require("hardhat");
 const { execPath } = require("process");
 
 const AddressZero = "0x0000000000000000000000000000000000000000";
-const pointZeroOne = convert("0.01", 18);
 const one = convert("1", 18);
+const ten = convert("10", 18);
 const oneHundred = convert("100", 18);
 
 const HONEY_ADDR = "0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03";
@@ -32,10 +32,16 @@ const ERC20_ABI = [
   "function name() view returns (string)",
 ];
 
+const BERO_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function balanceOf(address account) external view returns (uint256)",
+  "function buy(uint256 amountBase, uint256 minToken, uint256 expireTimestamp, address toAccount, address provider) external returns (bool)",
+];
+
 let owner, treasury, user0, user1, user2;
 let relayFactory, tokenFactory, rewarderFactory, distroFactory, feeFlowFactory;
 let relayToken, relayRewarder, relayDistro, relayFeeFlow;
-let HONEY;
+let HONEY, BERO;
 
 describe("local: test0", function () {
   before("Initial set up", async function () {
@@ -48,7 +54,10 @@ describe("local: test0", function () {
     [owner, treasury, user0, user1, user2] = await ethers.getSigners();
 
     HONEY = new ethers.Contract(HONEY_ADDR, ERC20_ABI, provider);
-    console.log("- ERC20s Initialized");
+    console.log("- HONEY Initialized");
+
+    BERO = new ethers.Contract(BERO_ADDR, BERO_ABI, provider);
+    console.log("- BERO Initialized");
 
     const relayFactoryArtifact = await ethers.getContractFactory(
       "RelayFactory"
@@ -106,26 +115,26 @@ describe("local: test0", function () {
     console.log("- RELAY Token deployed");
 
     relayToken = await ethers.getContractAt(
-      "RelayToken",
-      await tokenFactory.lastRelayToken()
+      "contracts/RelayTokenFactory.sol:RelayToken",
+      await tokenFactory.connect(owner).lastRelayToken()
     );
-    console.log("- relayToken Initialized");
+    console.log("- relayToken Initialized at:", relayToken.address);
 
     relayRewarder = await ethers.getContractAt(
       "RelayRewarder",
-      await rewarderFactory.lastRelayRewarder()
+      await rewarderFactory.connect(owner).lastRelayRewarder()
     );
     console.log("- relayRewarder Initialized");
 
     relayDistro = await ethers.getContractAt(
       "RelayDistro",
-      await distroFactory.lastRelayDistro()
+      await distroFactory.connect(owner).lastRelayDistro()
     );
     console.log("- relayDistro Initialized");
 
     relayFeeFlow = await ethers.getContractAt(
       "RelayFeeFlow",
-      await feeFlowFactory.lastRelayFeeFlow()
+      await feeFlowFactory.connect(owner).lastRelayFeeFlow()
     );
     console.log("- relayFeeFlow Initialized");
 
@@ -149,5 +158,33 @@ describe("local: test0", function () {
       value: ethers.utils.parseEther("1"),
     });
     await HONEY.connect(signer).transfer(user0.address, oneHundred);
+  });
+
+  it("User0 Buys BERO with 10 HONEY", async function () {
+    console.log("******************************************************");
+    await HONEY.connect(user0).approve(BERO.address, ten);
+    await BERO.connect(user0).buy(
+      ten,
+      1,
+      1792282187,
+      user0.address,
+      AddressZero
+    );
+  });
+
+  it("User0 mints relayToken with all TOKEN", async function () {
+    console.log("******************************************************");
+    console.log(relayToken.address);
+    await BERO.connect(user0).approve(relayToken.address, ten);
+    console.log(BERO.address);
+    // console.log(await relayToken.connect(user0).balanceOf(user0.address));
+    // await BERO.connect(user0).balanceOf(user0.address);
+    await relayToken.connect(user0).mint(user0.address, one);
+    // const code = await provider.getCode(BERO.address);
+    // console.log("BERO code: ", code);
+    // console.log(
+    //   "User0 relayToken Balance: ",
+    //   divDec(await relayToken.balanceOf(user0.address))
+    // );
   });
 });

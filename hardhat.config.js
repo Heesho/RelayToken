@@ -44,8 +44,8 @@ module.exports = {
       chainId: CHAIN_ID,
       forking: {
         url: RPC_URL,
+        blockNumber: 1814400,
       },
-      blockNumber: 1814400,
     },
   },
   etherscan: {
