@@ -40,20 +40,16 @@ module.exports = {
       chainId: CHAIN_ID,
       accounts: [PRIVATE_KEY],
     },
-    hardhat: {},
+    hardhat: {
+      chainId: CHAIN_ID,
+      forking: {
+        url: RPC_URL,
+      },
+      blockNumber: 1814400,
+    },
   },
   etherscan: {
     apiKey: SCAN_API_KEY,
-    // customChains: [
-    //   {
-    //     network: "base-sepolia",
-    //     chainId: 84532,
-    //     urls: {
-    //       apiURL: "https://api-sepolia.basescan.org/api",
-    //       browserURL: "https://sepolia.basescan.org/",
-    //     },
-    //   },
-    // ],
   },
   paths: {
     sources: "./contracts",
